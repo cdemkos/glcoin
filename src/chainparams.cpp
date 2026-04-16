@@ -156,7 +156,7 @@ public:
         genesis = CreateGenesisBlock(pszTimestamp,
                                      /*scriptPubKey=*/CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG,
                                      /*nTime=*/1744761600,
-                                     /*nNonce=*/0,
+                                     /*nNonce=*/1589838484,
                                      /*nBits=*/0x1d00ffff,
                                      /*nVersion=*/1,
                                      /*genesisReward=*/50 * COIN);
@@ -229,7 +229,7 @@ public:
                                      CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG,
                                      1744761600, 0, 0x1d00ffff, 1, 50 * COIN);
 
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.hashGenesisBlock = uint256S("0x00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f"));
 
         pchMessageStart[0] = 0xb1;
         pchMessageStart[1] = 0xc2;
