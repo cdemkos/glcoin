@@ -1,5 +1,5 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-present The Bitcoin Core developers
+// Copyright (c) 2009-present The GLCoin developers
 // Copyright (c) 2026 GLCoin developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -34,7 +34,7 @@
 using util::SplitString;
 
 // ---------------------------------------------------------------------------
-// Helper: reconstruct the genesis block from its known parameters
+// Helper: construct the GLCoin genesis block from its known parameters
 // ---------------------------------------------------------------------------
 static CBlock CreateGenesisBlock(const char* pszTimestamp,
                                  const CScript& genesisOutputScript,
@@ -179,16 +179,21 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1815;
 
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
-            1744761600, 1589838484, 0x1d00ffff, 1, 50 * COIN);
+            /*nTime=*/   1744761600,
+            /*nNonce=*/  1589838484,
+            /*nBits=*/   0x1d00ffff,
+            /*nVersion=*/1,
+            /*reward=*/  50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        // ── Mainnet genesis asserts ──────────────────────────────────────
+        // ── GLCoin Mainnet genesis asserts ──────────────────────────────
         assert(consensus.hashGenesisBlock ==
             uint256{"00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f"});
         assert(genesis.hashMerkleRoot ==
             uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
         // ────────────────────────────────────────────────────────────────
 
+        // ---- Network magic ----
         pchMessageStart[0] = 0xa1; pchMessageStart[1] = 0xb2;
         pchMessageStart[2] = 0xc3; pchMessageStart[3] = 0xd4;
         nDefaultPort = 8555;
@@ -232,28 +237,34 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1512;
 
         // Testnet uses nNonce=0 with the same timestamp/script.
-        // The Merkle root is identical to Mainnet (same pszTimestamp + pubkey).
-        // The genesis hash differs from Mainnet because nNonce and nBits differ.
-        // Run the mining loop to obtain the correct testnet genesis hash, then
-        // replace the assert below with the real value.
+        // Merkle root is identical to Mainnet (same GENESIS_TIMESTAMP + GENESIS_SCRIPT).
+        // Genesis hash differs — run the mining loop to obtain the correct value,
+        // then uncomment and fill in the assert below.
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
-            1744761600, 0, 0x1d00ffff, 1, 50 * COIN);
+            /*nTime=*/   1744761600,
+            /*nNonce=*/  0,
+            /*nBits=*/   0x1d00ffff,
+            /*nVersion=*/1,
+            /*reward=*/  50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        // ── Testnet genesis asserts ──────────────────────────────────────
-        // TODO: replace with real mined testnet hash once mining loop is run.
+        // ── GLCoin Testnet genesis asserts ──────────────────────────────
+        // TODO: replace placeholder with real mined testnet hash.
         // assert(consensus.hashGenesisBlock ==
         //     uint256{"<TESTNET_GENESIS_HASH>"});
         assert(genesis.hashMerkleRoot ==
             uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
         // ────────────────────────────────────────────────────────────────
 
+        // ---- Network magic ----
         pchMessageStart[0] = 0xb1; pchMessageStart[1] = 0xc2;
         pchMessageStart[2] = 0xd3; pchMessageStart[3] = 0xe4;
         nDefaultPort = 18555;
 
+        // ---- DNS Seeds ----
         vSeeds.emplace_back("seed.glcoin.org.");
 
+        // ---- Address prefixes ----
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 196);
         base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1, 239);
@@ -303,23 +314,28 @@ public:
             consensus.vDeployments[dep].min_activation_height = params.min_activation_height;
         }
 
-        // Regtest: nBits=0x207fffff (trivial PoW), nNonce=0 mines instantly.
+        // RegTest: nBits=0x207fffff (trivial PoW), nNonce=0 mines instantly.
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
-            1744761600, 0, 0x207fffff, 1, 50 * COIN);
+            /*nTime=*/   1744761600,
+            /*nNonce=*/  0,
+            /*nBits=*/   0x207fffff,
+            /*nVersion=*/1,
+            /*reward=*/  50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        // ── Regtest genesis assert ───────────────────────────────────────
-        // Merkle root is identical to Mainnet (same pszTimestamp + pubkey).
-        // Genesis hash differs — no assert needed for regtest (local only).
+        // ── GLCoin RegTest genesis assert ────────────────────────────────
+        // Merkle root is identical to Mainnet (same GENESIS_TIMESTAMP + GENESIS_SCRIPT).
+        // No genesis hash assert needed for RegTest — it is always local-only.
         assert(genesis.hashMerkleRoot ==
             uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
         // ────────────────────────────────────────────────────────────────
 
+        // ---- Network magic ----
         pchMessageStart[0] = 0xfa; pchMessageStart[1] = 0xbf;
         pchMessageStart[2] = 0xb5; pchMessageStart[3] = 0xda;
         nDefaultPort = 18444;
 
-        // No seeds for regtest — it's always local
+        // No seeds for RegTest — always local
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 196);
         base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1, 239);
