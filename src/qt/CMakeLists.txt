@@ -54,19 +54,19 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS forms)
 
 set(CMAKE_AUTORCC OFF)
-configure_file(bitcoin_locale.qrc bitcoin_locale.qrc USE_SOURCE_PERMISSIONS COPYONLY)
-qt6_add_resources(BITCOIN_QRC bitcoin.qrc)
-qt6_add_resources(BITCOIN_LOCALE_QRC ${CMAKE_CURRENT_BINARY_DIR}/bitcoin_locale.qrc)
+configure_file(bitcoin_locale.qrc glcoin_locale.qrc USE_SOURCE_PERMISSIONS COPYONLY)
+qt6_add_resources(GLCOIN_QRC glcoin.qrc)
+qt6_add_resources(GLCOIN_LOCALE_QRC ${CMAKE_CURRENT_BINARY_DIR}/glcoin_locale.qrc)
 # See: https://bugreports.qt.io/browse/QTBUG-141858.
 get_target_property(warn_flags warn_interface INTERFACE_COMPILE_OPTIONS)
 if("-Wtrailing-whitespace=any" IN_LIST warn_flags)
-  set_source_files_properties(${BITCOIN_QRC} ${BITCOIN_LOCALE_QRC} PROPERTIES COMPILE_OPTIONS -Wno-trailing-whitespace)
+  set_source_files_properties(${GLCOIN_QRC} ${GLCOIN_LOCALE_QRC} PROPERTIES COMPILE_OPTIONS -Wno-trailing-whitespace)
 endif()
 unset(warn_flags)
 
-# The bitcoinqt sources have to include headers in
+# The glcoinqt sources have to include headers in
 # order to parse them to collect translatable strings.
-add_library(bitcoinqt STATIC EXCLUDE_FROM_ALL
+add_library(glcoinqt STATIC EXCLUDE_FROM_ALL
   bantablemodel.cpp
   bantablemodel.h
   bitcoin.cpp
@@ -101,8 +101,8 @@ add_library(bitcoinqt STATIC EXCLUDE_FROM_ALL
   modaloverlay.h
   networkstyle.cpp
   networkstyle.h
-  notificator.cpp
-  notificator.h
+  notifier.cpp
+  notifier.h
   optionsdialog.cpp
   optionsdialog.h
   optionsmodel.cpp
@@ -127,23 +127,23 @@ add_library(bitcoinqt STATIC EXCLUDE_FROM_ALL
   utilitydialog.h
   $<$<PLATFORM_ID:Windows>:winshutdownmonitor.cpp>
   $<$<PLATFORM_ID:Windows>:winshutdownmonitor.h>
-  ${BITCOIN_QRC}
-  ${BITCOIN_LOCALE_QRC}
+  ${GLCOIN_QRC}
+  ${GLCOIN_LOCALE_QRC}
 )
-target_compile_definitions(bitcoinqt
+target_compile_definitions(glcoinqt
   PUBLIC
     QT_NO_KEYWORDS
     QT_USE_QSTRINGBUILDER
 )
-target_include_directories(bitcoinqt
+target_include_directories(glcoinqt
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
 )
 set_property(SOURCE macnotificationhandler.mm
-  # Ignore warnings "'NSUserNotificationCenter' is deprecated: first deprecated in macOS 11.0".
+  # Ignore warnings "NSUserNotificationCenter' is deprecated: first deprecated in macOS 11.0".
   APPEND PROPERTY COMPILE_OPTIONS -Wno-deprecated-declarations
 )
-target_link_libraries(bitcoinqt
+target_link_libraries(glcoinqt
   PUBLIC
     Qt6::Widgets
   PRIVATE
@@ -151,13 +151,13 @@ target_link_libraries(bitcoinqt
     bitcoin_cli
     leveldb
     Boost::headers
-    $<TARGET_NAME_IF_EXISTS:QRencode::QRencode>
-    $<$<PLATFORM_ID:Darwin>:-framework\ AppKit>
+    $<TARGET_NAME_IF_EXISTS:QREncode::QREncode>
+    $<$<PLATFORM_ID:Darwin>:-framework AppKit>
     $<$<CXX_COMPILER_ID:MSVC>:shlwapi>
 )
 
 if(ENABLE_WALLET)
-  target_sources(bitcoinqt
+  target_sources(glcoinqt
     PRIVATE
       addressbookpage.cpp
       addressbookpage.h
@@ -220,7 +220,7 @@ if(ENABLE_WALLET)
       walletview.cpp
       walletview.h
   )
-  target_link_libraries(bitcoinqt
+  target_link_libraries(glcoinqt
     PRIVATE
       bitcoin_wallet
       Qt6::Network
@@ -228,13 +228,13 @@ if(ENABLE_WALLET)
 endif()
 
 if(WITH_DBUS)
-  target_link_libraries(bitcoinqt PRIVATE Qt6::DBus)
+  target_link_libraries(glcoinqt PRIVATE Qt6::DBus)
 endif()
 
 if(qt_lib_type STREQUAL "STATIC_LIBRARY")
   # We want to define static plugins to link ourselves, thus preventing
   # automatic linking against a "sane" set of default static plugins.
-  qt6_import_plugins(bitcoinqt
+  qt6_import_plugins(glcoinqt
     EXCLUDE_BY_TYPE
       accessiblebridge
       platforms
@@ -255,41 +255,41 @@ endif()
 
 add_subdirectory(locale)
 
-add_executable(bitcoin-qt
+add_executable(glcoin-qt
   main.cpp
   ../init/bitcoin-qt.cpp
 )
 
-add_windows_resources(bitcoin-qt res/bitcoin-qt-res.rc)
-add_windows_application_manifest(bitcoin-qt)
+add_windows_resources(glcoin-qt res/bitcoin-qt-res.rc)
+add_windows_application_manifest(glcoin-qt)
 
-target_link_libraries(bitcoin-qt
+target_link_libraries(glcoin-qt
   core_interface
-  bitcoinqt
+  glcoinqt
   bitcoin_node
 )
 
-import_plugins(bitcoin-qt)
-install_binary_component(bitcoin-qt HAS_MANPAGE)
+import_plugins(glcoin-qt)
+install_binary_component(glcoin-qt HAS_MANPAGE)
 if(WIN32)
-  set_target_properties(bitcoin-qt PROPERTIES WIN32_EXECUTABLE TRUE)
+  set_target_properties(glcoin-qt PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
 if(ENABLE_IPC)
-  add_executable(bitcoin-gui
+  add_executable(glcoin-gui
     main.cpp
     ../init/bitcoin-gui.cpp
   )
-  target_link_libraries(bitcoin-gui
+  target_link_libraries(glcoin-gui
     core_interface
-    bitcoinqt
+    glcoinqt
     bitcoin_node
     bitcoin_ipc
   )
-  import_plugins(bitcoin-gui)
-  install_binary_component(bitcoin-gui INTERNAL)
+  import_plugins(glcoin-gui)
+  install_binary_component(glcoin-gui INTERNAL)
   if(WIN32)
-    set_target_properties(bitcoin-gui PROPERTIES WIN32_EXECUTABLE TRUE)
+    set_target_properties(glcoin-gui PROPERTIES WIN32_EXECUTABLE TRUE)
   endif()
 endif()
 
