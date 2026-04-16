@@ -34,7 +34,7 @@
 using util::SplitString;
 
 // -----------------------------------------------------------------------
-// Helper: build the genesis coinbase + block
+// Helper: reconstruct the genesis block from its known parameters
 // -----------------------------------------------------------------------
 static CBlock CreateGenesisBlock(const char* pszTimestamp,
                                  const CScript& genesisOutputScript,
@@ -45,7 +45,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp,
                                  const CAmount& genesisReward)
 {
     CMutableTransaction txNew;
-    txNew.version = 1;  // modern Bitcoin Core: field is "version", not "nVersion"
+    txNew.version = 1;
     txNew.vin.resize(1);
     txNew.vout.resize(1);
     txNew.vin[0].scriptSig = CScript()
@@ -145,7 +145,7 @@ void ReadRegTestArgs(const ArgsManager& args, CChainParams::RegTestOptions& opti
 }
 
 // -----------------------------------------------------------------------
-// Shared genesis params
+// Shared genesis constants
 // -----------------------------------------------------------------------
 static const char* GENESIS_TIMESTAMP =
     "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
@@ -195,16 +195,6 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
         bech32_hrp = "glc";
 
-        // ----------------------------------------------------------------
-        // CHECKPOINT FIX: open src/chainparams.h and search for the word
-        // "checkpoint" — use whatever protected member name you find there.
-        // Common names across Bitcoin Core versions:
-        //   checkpointData     (most versions up to ~29.x)
-        //   m_checkpoints      (some forks)
-        // Replace the line below with the correct name if it fails.
-        // ----------------------------------------------------------------
-        checkpointData = {};
-
         m_assumeutxo_data = {};
         chainTxData = ChainTxData{1744761600, 0, 0.0};
     }
@@ -248,7 +238,6 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
         bech32_hrp = "tglc";
 
-        checkpointData = {};  // see note in CMainParams above
         m_assumeutxo_data = {};
         chainTxData = ChainTxData{1744761600, 0, 0.0};
     }
@@ -278,11 +267,11 @@ public:
 
         for (const auto& [dep, height] : opts.activation_heights) {
             switch (dep) {
-                case Consensus::BuriedDeployment::DEPLOYMENT_SEGWIT:      consensus.SegwitHeight = int{height}; break;
-                case Consensus::BuriedDeployment::DEPLOYMENT_HEIGHTINCB:  consensus.BIP34Height  = int{height}; break;
-                case Consensus::BuriedDeployment::DEPLOYMENT_CLTV:        consensus.BIP65Height  = int{height}; break;
-                case Consensus::BuriedDeployment::DEPLOYMENT_DERSIG:      consensus.BIP66Height  = int{height}; break;
-                case Consensus::BuriedDeployment::DEPLOYMENT_CSV:         consensus.CSVHeight    = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_SEGWIT:     consensus.SegwitHeight = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_HEIGHTINCB: consensus.BIP34Height  = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_CLTV:       consensus.BIP65Height  = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_DERSIG:     consensus.BIP66Height  = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_CSV:        consensus.CSVHeight    = int{height}; break;
             }
         }
         for (const auto& [dep, params] : opts.version_bits_parameters) {
@@ -306,7 +295,6 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
         bech32_hrp = "rglc";
 
-        checkpointData = {};  // see note in CMainParams above
         m_assumeutxo_data = {};
         chainTxData = ChainTxData{0, 0, 0.0};
     }
@@ -325,9 +313,9 @@ const CChainParams& Params() {
 std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, const ChainType chain)
 {
     switch (chain) {
-        case ChainType::MAIN:    return std::make_unique<CMainParams>();
-        case ChainType::TESTNET: return std::make_unique<CTestNetParams>();
-        case ChainType::TESTNET4:return std::make_unique<CTestNetParams>();
+        case ChainType::MAIN:     return std::make_unique<CMainParams>();
+        case ChainType::TESTNET:  return std::make_unique<CTestNetParams>();
+        case ChainType::TESTNET4: return std::make_unique<CTestNetParams>();
         case ChainType::SIGNET: {
             auto opts = CChainParams::SigNetOptions{};
             ReadSigNetArgs(args, opts);
