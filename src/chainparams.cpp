@@ -6,15 +6,6 @@
 
 // =====================================================================
 // GLCoin - Custom Chain Parameters
-// Network : GLCoin Mainnet
-// Port    : 8555 (RPC: 8556)
-// Magic   : 0xA1B2C3D4
-// Bech32  : glc
-// WIF     : 0x80 (same as BTC for tooling compat)
-// Genesis : 2026-04-16 00:00:00 UTC
-// nNonce  = 1589838484 (mined)
-// nBits   = 0x1d00ffff
-// Hash    = 0x00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f
 // =====================================================================
 
 #include <chainparams.h>
@@ -28,7 +19,6 @@
 #include <util/strencodings.h>
 #include <util/string.h>
 
-// For CreateGenesisBlock helper below
 #include <arith_uint256.h>
 #include <consensus/merkle.h>
 #include <primitives/block.h>
@@ -43,11 +33,9 @@
 
 using util::SplitString;
 
-// ---------------------------------------------------------------------------
-// FIX #3: Restore the static CreateGenesisBlock() helper that was lost from
-//         the glcoin fork.  Uses the current field names from Bitcoin Core
-//         master (CMutableTransaction::version, not nVersion).
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// Helper: build the genesis coinbase + block
+// -----------------------------------------------------------------------
 static CBlock CreateGenesisBlock(const char* pszTimestamp,
                                  const CScript& genesisOutputScript,
                                  uint32_t nTime,
@@ -57,7 +45,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp,
                                  const CAmount& genesisReward)
 {
     CMutableTransaction txNew;
-    txNew.version = 1;           // FIX: field is now "version", not "nVersion"
+    txNew.version = 1;  // modern Bitcoin Core: field is "version", not "nVersion"
     txNew.vin.resize(1);
     txNew.vout.resize(1);
     txNew.vin[0].scriptSig = CScript()
@@ -80,7 +68,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp,
     return genesis;
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 void ReadSigNetArgs(const ArgsManager& args, CChainParams::SigNetOptions& options)
 {
@@ -130,20 +118,14 @@ void ReadRegTestArgs(const ArgsManager& args, CChainParams::RegTestOptions& opti
         }
         CChainParams::VersionBitsParameters vbparams{};
         const auto start_time{ToIntegral<int64_t>(vDeploymentParams[1])};
-        if (!start_time) {
-            throw std::runtime_error(strprintf("Invalid nStartTime (%s)", vDeploymentParams[1]));
-        }
+        if (!start_time) throw std::runtime_error(strprintf("Invalid nStartTime (%s)", vDeploymentParams[1]));
         vbparams.start_time = *start_time;
         const auto timeout{ToIntegral<int64_t>(vDeploymentParams[2])};
-        if (!timeout) {
-            throw std::runtime_error(strprintf("Invalid nTimeout (%s)", vDeploymentParams[2]));
-        }
+        if (!timeout) throw std::runtime_error(strprintf("Invalid nTimeout (%s)", vDeploymentParams[2]));
         vbparams.timeout = *timeout;
         if (vDeploymentParams.size() >= 4) {
             const auto min_activation_height{ToIntegral<int64_t>(vDeploymentParams[3])};
-            if (!min_activation_height) {
-                throw std::runtime_error(strprintf("Invalid min_activation_height (%s)", vDeploymentParams[3]));
-            }
+            if (!min_activation_height) throw std::runtime_error(strprintf("Invalid min_activation_height (%s)", vDeploymentParams[3]));
             vbparams.min_activation_height = *min_activation_height;
         } else {
             vbparams.min_activation_height = 0;
@@ -158,11 +140,18 @@ void ReadRegTestArgs(const ArgsManager& args, CChainParams::RegTestOptions& opti
                 break;
             }
         }
-        if (!found) {
-            throw std::runtime_error(strprintf("Invalid deployment (%s)", vDeploymentParams[0]));
-        }
+        if (!found) throw std::runtime_error(strprintf("Invalid deployment (%s)", vDeploymentParams[0]));
     }
 }
+
+// -----------------------------------------------------------------------
+// Shared genesis params
+// -----------------------------------------------------------------------
+static const char* GENESIS_TIMESTAMP =
+    "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
+static const CScript GENESIS_SCRIPT =
+    CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f")
+              << OP_CHECKSIG;
 
 // -----------------------------------------------------------------------
 // GLCoin Main Network
@@ -172,7 +161,6 @@ public:
     CMainParams() {
         m_chain_type = ChainType::MAIN;
 
-        // ---- Consensus ----
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP34Height  = 1;
         consensus.BIP34Hash    = uint256{};
@@ -181,61 +169,44 @@ public:
         consensus.CSVHeight    = 1;
         consensus.SegwitHeight = 1;
         consensus.MinBIP9WarningHeight = 0;
-
-        // FIX #1: Use uint256{"hex"} constructor — no uint256S() needed.
-        consensus.powLimit = uint256{"00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
-
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // 2 weeks
-        consensus.nPowTargetSpacing  = 10 * 60;            // 10 minutes
+        consensus.powLimit     = uint256{"00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
+        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60;
+        consensus.nPowTargetSpacing  = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.enforce_BIP94     = false;
         consensus.fPowNoRetargeting = false;
-
-        // FIX #2: nRuleChangeActivationThreshold / nMinerConfirmationWindow were
-        // moved into each BIP9Deployment's threshold / period fields.
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].period    = 2016;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1815; // ~90%
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1815;
 
-        // ---- Genesis Block ----
-        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
-        genesis = CreateGenesisBlock(pszTimestamp,   // FIX #3
-            CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG,
-            /*nTime=*/  1744761600,
-            /*nNonce=*/ 1589838484,
-            /*nBits=*/  0x1d00ffff,
-            /*nVersion=*/1,
-            /*genesisReward=*/50 * COIN);
-
+        genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
+            1744761600, 1589838484, 0x1d00ffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock ==
             uint256{"00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f"});
 
-        // ---- Network Magic (0xA1B2C3D4) ----
-        pchMessageStart[0] = 0xa1;
-        pchMessageStart[1] = 0xb2;
-        pchMessageStart[2] = 0xc3;
-        pchMessageStart[3] = 0xd4;
-
+        pchMessageStart[0] = 0xa1; pchMessageStart[1] = 0xb2;
+        pchMessageStart[2] = 0xc3; pchMessageStart[3] = 0xd4;
         nDefaultPort = 8555;
 
-        // ---- Address prefixes ----
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 38); // 'G'
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 38);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 5);
         base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1, 128);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
         bech32_hrp = "glc";
 
-        // FIX #4: modern Bitcoin Core renamed checkpointData -> m_checkpoints
-        m_checkpoints = {};
+        // ----------------------------------------------------------------
+        // CHECKPOINT FIX: open src/chainparams.h and search for the word
+        // "checkpoint" — use whatever protected member name you find there.
+        // Common names across Bitcoin Core versions:
+        //   checkpointData     (most versions up to ~29.x)
+        //   m_checkpoints      (some forks)
+        // Replace the line below with the correct name if it fails.
+        // ----------------------------------------------------------------
+        checkpointData = {};
 
         m_assumeutxo_data = {};
-
-        chainTxData = ChainTxData{
-            /* nTime    */ 1744761600,
-            /* nTxCount */ 0,
-            /* dTxRate  */ 0.0,
-        };
+        chainTxData = ChainTxData{1744761600, 0, 0.0};
     }
 };
 
@@ -248,35 +219,26 @@ public:
         m_chain_type = ChainType::TESTNET;
 
         consensus.nSubsidyHalvingInterval = 210000;
-        consensus.BIP34Height  = 1;
-        consensus.BIP34Hash    = uint256{};
-        consensus.BIP65Height  = 1;
-        consensus.BIP66Height  = 1;
-        consensus.CSVHeight    = 1;
-        consensus.SegwitHeight = 1;
+        consensus.BIP34Height  = 1;  consensus.BIP34Hash    = uint256{};
+        consensus.BIP65Height  = 1;  consensus.BIP66Height  = 1;
+        consensus.CSVHeight    = 1;  consensus.SegwitHeight = 1;
         consensus.MinBIP9WarningHeight = 0;
-        consensus.powLimit = uint256{"00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}; // FIX #1
+        consensus.powLimit     = uint256{"00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60;
         consensus.nPowTargetSpacing  = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.enforce_BIP94     = false;
         consensus.fPowNoRetargeting = false;
-
-        // FIX #2
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].period    = 2016;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1512; // ~75%
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1512;
 
-        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
-        genesis = CreateGenesisBlock(pszTimestamp,   // FIX #3
-            CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG,
+        genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
             1744761600, 0, 0x1d00ffff, 1, 50 * COIN);
+        consensus.hashGenesisBlock =
+            uint256{"00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f"};
 
-        consensus.hashGenesisBlock = uint256{"00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f"};
-
-        pchMessageStart[0] = 0xb1;
-        pchMessageStart[1] = 0xc2;
-        pchMessageStart[2] = 0xd3;
-        pchMessageStart[3] = 0xe4;
+        pchMessageStart[0] = 0xb1; pchMessageStart[1] = 0xc2;
+        pchMessageStart[2] = 0xd3; pchMessageStart[3] = 0xe4;
         nDefaultPort = 18555;
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 111);
@@ -286,7 +248,7 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
         bech32_hrp = "tglc";
 
-        m_checkpoints = {};  // FIX #4
+        checkpointData = {};  // see note in CMainParams above
         m_assumeutxo_data = {};
         chainTxData = ChainTxData{1744761600, 0, 0.0};
     }
@@ -301,56 +263,40 @@ public:
         m_chain_type = ChainType::REGTEST;
 
         consensus.nSubsidyHalvingInterval = 150;
-        consensus.BIP34Height  = 1;
-        consensus.BIP34Hash    = uint256{};
-        consensus.BIP65Height  = 1;
-        consensus.BIP66Height  = 1;
-        consensus.CSVHeight    = 1;
-        consensus.SegwitHeight = 0;
+        consensus.BIP34Height  = 1;  consensus.BIP34Hash    = uint256{};
+        consensus.BIP65Height  = 1;  consensus.BIP66Height  = 1;
+        consensus.CSVHeight    = 1;  consensus.SegwitHeight = 0;
         consensus.MinBIP9WarningHeight = 0;
-        consensus.powLimit = uint256{"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}; // FIX #1
+        consensus.powLimit     = uint256{"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60;
         consensus.nPowTargetSpacing  = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.enforce_BIP94     = opts.enforce_bip94;
         consensus.fPowNoRetargeting = true;
-
-        // FIX #2
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].period    = 144;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 108; // 75%
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 108;
 
         for (const auto& [dep, height] : opts.activation_heights) {
             switch (dep) {
-                case Consensus::BuriedDeployment::DEPLOYMENT_SEGWIT:
-                    consensus.SegwitHeight = int{height}; break;
-                case Consensus::BuriedDeployment::DEPLOYMENT_HEIGHTINCB:
-                    consensus.BIP34Height  = int{height}; break;
-                case Consensus::BuriedDeployment::DEPLOYMENT_CLTV:
-                    consensus.BIP65Height  = int{height}; break;
-                case Consensus::BuriedDeployment::DEPLOYMENT_DERSIG:
-                    consensus.BIP66Height  = int{height}; break;
-                case Consensus::BuriedDeployment::DEPLOYMENT_CSV:
-                    consensus.CSVHeight    = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_SEGWIT:      consensus.SegwitHeight = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_HEIGHTINCB:  consensus.BIP34Height  = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_CLTV:        consensus.BIP65Height  = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_DERSIG:      consensus.BIP66Height  = int{height}; break;
+                case Consensus::BuriedDeployment::DEPLOYMENT_CSV:         consensus.CSVHeight    = int{height}; break;
             }
         }
-
         for (const auto& [dep, params] : opts.version_bits_parameters) {
             consensus.vDeployments[dep].nStartTime            = params.start_time;
             consensus.vDeployments[dep].nTimeout              = params.timeout;
             consensus.vDeployments[dep].min_activation_height = params.min_activation_height;
         }
 
-        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
-        genesis = CreateGenesisBlock(pszTimestamp,   // FIX #3
-            CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG,
+        genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
             1744761600, 0, 0x207fffff, 1, 50 * COIN);
-
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        pchMessageStart[0] = 0xfa;
-        pchMessageStart[1] = 0xbf;
-        pchMessageStart[2] = 0xb5;
-        pchMessageStart[3] = 0xda;
+        pchMessageStart[0] = 0xfa; pchMessageStart[1] = 0xbf;
+        pchMessageStart[2] = 0xb5; pchMessageStart[3] = 0xda;
         nDefaultPort = 18444;
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 111);
@@ -360,7 +306,7 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
         bech32_hrp = "rglc";
 
-        m_checkpoints = {};  // FIX #4
+        checkpointData = {};  // see note in CMainParams above
         m_assumeutxo_data = {};
         chainTxData = ChainTxData{0, 0, 0.0};
     }
@@ -379,12 +325,9 @@ const CChainParams& Params() {
 std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, const ChainType chain)
 {
     switch (chain) {
-        case ChainType::MAIN:
-            return std::make_unique<CMainParams>();
-        case ChainType::TESTNET:
-            return std::make_unique<CTestNetParams>();
-        case ChainType::TESTNET4:
-            return std::make_unique<CTestNetParams>(); // GLCoin has no testnet4
+        case ChainType::MAIN:    return std::make_unique<CMainParams>();
+        case ChainType::TESTNET: return std::make_unique<CTestNetParams>();
+        case ChainType::TESTNET4:return std::make_unique<CTestNetParams>();
         case ChainType::SIGNET: {
             auto opts = CChainParams::SigNetOptions{};
             ReadSigNetArgs(args, opts);
