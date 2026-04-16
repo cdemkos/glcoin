@@ -4,7 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-// ============================================================
+// =====================================================================
 // GLCoin - Custom Chain Parameters
 // Network  : GLCoin Mainnet
 // Port     : 8555  (RPC: 8556)
@@ -12,10 +12,10 @@
 // Bech32   : glc
 // WIF      : 0x80  (same as BTC for tooling compat)
 // Genesis  : 2026-04-16 00:00:00 UTC
-//            nNonce   = 0 (placeholder — mine offline)
-//            nBits    = 0x1d00ffff
-//            Hash     = (to be updated after nonce found)
-// ============================================================
+//             nNonce   = 1589838484 (mined)
+//             nBits    = 0x1d00ffff
+//             Hash     = 0x00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f
+// =====================================================================
 
 #include <chainparams.h>
 
@@ -121,9 +121,9 @@ void ReadRegTestArgs(const ArgsManager& args, CChainParams::RegTestOptions& opti
     }
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // GLCoin Main Network
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
@@ -149,9 +149,9 @@ public:
 
         // ---- Genesis Block ----
         // pszTimestamp encodes the founding message of GLCoin
-        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 — Built for the community";
+        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
         // nTime  : Unix timestamp for 2026-04-16 00:00:00 UTC
-        // nNonce : 0 placeholder — replace with mined value before launch
+        // nNonce : 1589838484 (mined)
         // nBits  : 0x1d00ffff (standard mainnet difficulty 1)
         genesis = CreateGenesisBlock(pszTimestamp,
                                      /*scriptPubKey=*/CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG,
@@ -162,9 +162,8 @@ public:
                                      /*genesisReward=*/50 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetHash();
-        // TODO: Update these asserts after mining the genesis nonce offline:
-        // assert(consensus.hashGenesisBlock == uint256S("0x<mined_hash>"));
-        // assert(genesis.hashMerkleRoot     == uint256S("0x<merkle_root>"));
+        assert(consensus.hashGenesisBlock ==
+               uint256S("0x00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f"));
 
         // ---- Network Magic (0xA1B2C3D4) ----
         pchMessageStart[0] = 0xa1;
@@ -199,9 +198,9 @@ public:
     }
 };
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // GLCoin Testnet
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
@@ -224,7 +223,7 @@ public:
         consensus.nRuleChangeActivationThreshold = 1512;
         consensus.nMinerConfirmationWindow = 2016;
 
-        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 — Built for the community";
+        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
         genesis = CreateGenesisBlock(pszTimestamp,
                                      CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG,
                                      1744761600, 0, 0x1d00ffff, 1, 50 * COIN);
@@ -252,9 +251,9 @@ public:
     }
 };
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // GLCoin RegTest
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 class CRegTestParams : public CChainParams {
 public:
     explicit CRegTestParams(const RegTestOptions& opts) {
@@ -303,7 +302,7 @@ public:
             consensus.vDeployments[dep].min_activation_height = params.min_activation_height;
         }
 
-        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 — Built for the community";
+        const char* pszTimestamp = "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
         genesis = CreateGenesisBlock(pszTimestamp,
                                      CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG,
                                      1744761600, 0, 0x207fffff, 1, 50 * COIN);
@@ -331,9 +330,9 @@ public:
     }
 };
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // Factory helpers (unchanged interface)
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 static std::unique_ptr<const CChainParams> globalChainParams;
 
 const CChainParams &Params() {
