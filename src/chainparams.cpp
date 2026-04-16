@@ -4,9 +4,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-// ============================================================================
+// ================================================================================
 // GLCoin - Custom Chain Parameters
-// ============================================================================
+// ================================================================================
 
 #include <chainparams.h>
 #include <chainparamsbase.h>
@@ -33,9 +33,9 @@
 
 using util::SplitString;
 
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // Helper: construct the GLCoin genesis block from its known parameters
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 static CBlock CreateGenesisBlock(const char* pszTimestamp,
                                  const CScript& genesisOutputScript,
                                  uint32_t nTime,
@@ -68,7 +68,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp,
     return genesis;
 }
 
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 
 void ReadSigNetArgs(const ArgsManager& args, CChainParams::SigNetOptions& options)
 {
@@ -136,7 +136,7 @@ void ReadRegTestArgs(const ArgsManager& args, CChainParams::RegTestOptions& opti
                 options.version_bits_parameters[Consensus::DeploymentPos(j)] = vbparams;
                 found = true;
                 LogInfo("Setting version bits activation parameters for %s to start=%ld, timeout=%ld, min_activation_height=%d",
-                        vDeploymentParams[0], vbparams.start_time, vbparams.timeout, vbparams.min_activation_height);
+                                vDeploymentParams[0], vbparams.start_time, vbparams.timeout, vbparams.min_activation_height);
                 break;
             }
         }
@@ -144,25 +144,18 @@ void ReadRegTestArgs(const ArgsManager& args, CChainParams::RegTestOptions& opti
     }
 }
 
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // Shared genesis constants
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 static const char* GENESIS_TIMESTAMP =
     "GLCoin Genesis 2026-04-16 \xe2\x80\x94 Built for the community";
 static const CScript GENESIS_SCRIPT =
     CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f")
               << OP_CHECKSIG;
 
-// Confirmed genesis values (mainnet, mined):
-//   nTime   = 1744761600
-//   nNonce  = 1589838484
-//   nBits   = 0x1d00ffff
-//   Hash    = 00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f
-//   Merkle  = 3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a
-
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // GLCoin Main Network
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
@@ -185,6 +178,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].period    = 2016;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1815;
 
+        // ── Mainnet Genesis Block ─────────────────────────────────────────────
+        // nNonce=1589838484  nBits=0x1d00ffff  nTime=1744761600
+        // Hash   = 00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f
+        // Merkle = 3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
             /*nTime=*/   1744761600,
             /*nNonce=*/  1589838484,
@@ -198,7 +195,7 @@ public:
         assert(genesis.hashMerkleRoot ==
             uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
 
-        // ── Network magic ────────────────────────────────────────────────────
+        // ── Network magic ─────────────────────────────────────────────────────
         pchMessageStart[0] = 0xa1; pchMessageStart[1] = 0xb2;
         pchMessageStart[2] = 0xc3; pchMessageStart[3] = 0xd4;
         nDefaultPort = 8555;
@@ -217,9 +214,9 @@ public:
     }
 };
 
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // GLCoin Testnet
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
@@ -239,17 +236,20 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].period    = 2016;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1512;
 
+        // ── Testnet Genesis Block ─────────────────────────────────────────────
+        // nNonce=2952799039  nBits=0x1e0ffff0  nTime=1744761600
+        // Hash   = 00000375a6af18f777b2105faf347e16cf0072398f4dcb91bcc4d17d0566171b
+        // Merkle = 3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
             /*nTime=*/   1744761600,
-            /*nNonce=*/  0,
-            /*nBits=*/   0x1d00ffff,
+            /*nNonce=*/  2952799039,
+            /*nBits=*/   0x1e0ffff0,
             /*nVersion=*/1,
             /*reward=*/  50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        // Merkle root is identical to mainnet (same timestamp + script).
-        // Testnet genesis hash differs from mainnet due to different nNonce.
-        // TODO: mine testnet genesis and add hash assert here.
+        assert(consensus.hashGenesisBlock ==
+            uint256{"00000375a6af18f777b2105faf347e16cf0072398f4dcb91bcc4d17d0566171b"});
         assert(genesis.hashMerkleRoot ==
             uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
 
@@ -271,9 +271,9 @@ public:
     }
 };
 
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // GLCoin RegTest
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 class CRegTestParams : public CChainParams {
 public:
     explicit CRegTestParams(const RegTestOptions& opts) {
@@ -308,16 +308,20 @@ public:
             consensus.vDeployments[dep].min_activation_height = params.min_activation_height;
         }
 
+        // ── Regtest Genesis Block ─────────────────────────────────────────────
+        // nNonce=1  nBits=0x207fffff  nTime=1744761600
+        // Hash   = 6bd0f5b6bab62110bfe0dd45be5301d4ad65d5f88f79e870c511d158054ed0d3
+        // Merkle = 3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
             /*nTime=*/   1744761600,
-            /*nNonce=*/  0,
+            /*nNonce=*/  1,
             /*nBits=*/   0x207fffff,
             /*nVersion=*/1,
             /*reward=*/  50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        // Merkle root is identical to mainnet (same timestamp + script).
-        // No genesis hash assert for RegTest — always local-only.
+        assert(consensus.hashGenesisBlock ==
+            uint256{"6bd0f5b6bab62110bfe0dd45be5301d4ad65d5f88f79e870c511d158054ed0d3"});
         assert(genesis.hashMerkleRoot ==
             uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
 
@@ -337,9 +341,9 @@ public:
     }
 };
 
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // Factory helpers
-// ---------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 static std::unique_ptr<const CChainParams> globalChainParams;
 
 const CChainParams& Params() {
@@ -350,7 +354,7 @@ const CChainParams& Params() {
 std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, const ChainType chain)
 {
     switch (chain) {
-        case ChainType::MAIN:     return std::make_unique<CMainParams>();
+        case ChainType::MAIN:    return std::make_unique<CMainParams>();
         case ChainType::TESTNET:  return std::make_unique<CTestNetParams>();
         case ChainType::TESTNET4: return std::make_unique<CTestNetParams>();
         case ChainType::SIGNET: {
