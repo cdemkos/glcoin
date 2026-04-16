@@ -188,7 +188,11 @@ public:
         pchMessageStart[2] = 0xc3; pchMessageStart[3] = 0xd4;
         nDefaultPort = 8555;
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 38);
+        // ---- DNS Seeds ----
+        vSeeds.emplace_back("seed.glcoin.org.");
+
+        // ---- Address prefixes ----
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 38); // 'G'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 5);
         base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1, 128);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
@@ -230,6 +234,8 @@ public:
         pchMessageStart[0] = 0xb1; pchMessageStart[1] = 0xc2;
         pchMessageStart[2] = 0xd3; pchMessageStart[3] = 0xe4;
         nDefaultPort = 18555;
+
+        vSeeds.emplace_back("seed.glcoin.org.");
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 196);
@@ -288,6 +294,7 @@ public:
         pchMessageStart[2] = 0xb5; pchMessageStart[3] = 0xda;
         nDefaultPort = 18444;
 
+        // No seeds for regtest — it's always local
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 196);
         base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1, 239);
