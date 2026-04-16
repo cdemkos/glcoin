@@ -69,31 +69,6 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp,
 }
 
 // ---------------------------------------------------------------------------
-// MineGenesisBlock: increment nNonce until PoW target is met.
-// Call this once to discover the correct nNonce, then hardcode it.
-// ---------------------------------------------------------------------------
-static void MineGenesisBlock(CBlock& genesis, uint32_t nBits)
-{
-    arith_uint256 target;
-    target.SetCompact(nBits);
-    printf("Mining genesis block (nBits=0x%08x, target=%s)...\n",
-           nBits, target.GetHex().c_str());
-    while (UintToArith256(genesis.GetHash()) > target) {
-        ++genesis.nNonce;
-        if (genesis.nNonce == 0) {
-            printf("  nNonce wrapped, incrementing nTime\n");
-            ++genesis.nTime;
-        }
-    }
-    printf("Genesis found!\n");
-    printf("  nNonce   = %u\n",    genesis.nNonce);
-    printf("  nTime    = %u\n",    genesis.nTime);
-    printf("  Hash     = %s\n",    genesis.GetHash().ToString().c_str());
-    printf("  MerkleRoot = %s\n",  genesis.hashMerkleRoot.ToString().c_str());
-    printf("Update CMainParams with these values and remove the MineGenesisBlock() call.\n");
-}
-
-// ---------------------------------------------------------------------------
 
 void ReadSigNetArgs(const ArgsManager& args, CChainParams::SigNetOptions& options)
 {
@@ -178,6 +153,13 @@ static const CScript GENESIS_SCRIPT =
     CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f")
               << OP_CHECKSIG;
 
+// Confirmed genesis values (mainnet, mined):
+//   nTime   = 1744761600
+//   nNonce  = 1589838484
+//   nBits   = 0x1d00ffff
+//   Hash    = 00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f
+//   Merkle  = 3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a
+
 // ---------------------------------------------------------------------------
 // GLCoin Main Network
 // ---------------------------------------------------------------------------
@@ -203,42 +185,26 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].period    = 2016;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1815;
 
-        // ── Step 1: build genesis with the candidate nNonce ──────────────────
-        // If this nNonce produces a hash that satisfies nBits=0x1d00ffff the
-        // assert below will pass.  If not, MineGenesisBlock() will search for
-        // the correct nNonce and print it; update nNonce here and re-compile.
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
             /*nTime=*/   1744761600,
             /*nNonce=*/  1589838484,
             /*nBits=*/   0x1d00ffff,
             /*nVersion=*/1,
             /*reward=*/  50 * COIN);
-
-        // ── Step 2: verify PoW; mine if needed ───────────────────────────────
-        {
-            arith_uint256 target;
-            target.SetCompact(genesis.nBits);
-            if (UintToArith256(genesis.GetHash()) > target) {
-                // nNonce is wrong — find the correct one and print it.
-                MineGenesisBlock(genesis, genesis.nBits);
-            }
-        }
-
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        // ── Step 3: sanity-check merkle root (always deterministic) ──────────
+        assert(consensus.hashGenesisBlock ==
+            uint256{"00000000fa4f57a0d6968567b7e73642a338f363c004cd05583e1d53be24ed5f"});
         assert(genesis.hashMerkleRoot ==
-            uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a5132 3a9fb8aa4b1e5e4a"});
+            uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
 
         // ── Network magic ────────────────────────────────────────────────────
         pchMessageStart[0] = 0xa1; pchMessageStart[1] = 0xb2;
         pchMessageStart[2] = 0xc3; pchMessageStart[3] = 0xd4;
         nDefaultPort = 8555;
 
-        // ── DNS Seeds ────────────────────────────────────────────────────────
         vSeeds.emplace_back("seed.glcoin.org.");
 
-        // ── Address prefixes ─────────────────────────────────────────────────
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 38); // 'G'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 5);
         base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1, 128);
@@ -273,10 +239,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].period    = 2016;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].threshold = 1512;
 
-        // Testnet uses nNonce=0 with the same timestamp/script.
-        // Merkle root is identical to Mainnet (same GENESIS_TIMESTAMP + GENESIS_SCRIPT).
-        // Genesis hash differs — run the mining loop to obtain the correct value,
-        // then uncomment and fill in the assert below.
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
             /*nTime=*/   1744761600,
             /*nNonce=*/  0,
@@ -285,22 +247,18 @@ public:
             /*reward=*/  50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        // ── GLCoin Testnet genesis asserts ───────────────────────────────────
-        // TODO: replace placeholder with real mined testnet hash.
-        // assert(consensus.hashGenesisBlock ==
-        //     uint256{"<TESTNET_GENESIS_HASH>"});
+        // Merkle root is identical to mainnet (same timestamp + script).
+        // Testnet genesis hash differs from mainnet due to different nNonce.
+        // TODO: mine testnet genesis and add hash assert here.
         assert(genesis.hashMerkleRoot ==
-            uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a5132 3a9fb8aa4b1e5e4a"});
+            uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
 
-        // ── Network magic ────────────────────────────────────────────────────
         pchMessageStart[0] = 0xb1; pchMessageStart[1] = 0xc2;
         pchMessageStart[2] = 0xd3; pchMessageStart[3] = 0xe4;
         nDefaultPort = 18555;
 
-        // ── DNS Seeds ────────────────────────────────────────────────────────
         vSeeds.emplace_back("seed.glcoin.org.");
 
-        // ── Address prefixes ─────────────────────────────────────────────────
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 196);
         base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1, 239);
@@ -350,7 +308,6 @@ public:
             consensus.vDeployments[dep].min_activation_height = params.min_activation_height;
         }
 
-        // RegTest: nBits=0x207fffff (trivial PoW), nNonce=0 mines instantly.
         genesis = CreateGenesisBlock(GENESIS_TIMESTAMP, GENESIS_SCRIPT,
             /*nTime=*/   1744761600,
             /*nNonce=*/  0,
@@ -359,18 +316,15 @@ public:
             /*reward=*/  50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
 
-        // ── GLCoin RegTest genesis assert ────────────────────────────────────
-        // Merkle root is identical to Mainnet (same GENESIS_TIMESTAMP + GENESIS_SCRIPT).
-        // No genesis hash assert needed for RegTest — it is always local-only.
+        // Merkle root is identical to mainnet (same timestamp + script).
+        // No genesis hash assert for RegTest — always local-only.
         assert(genesis.hashMerkleRoot ==
-            uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a5132 3a9fb8aa4b1e5e4a"});
+            uint256{"3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"});
 
-        // ── Network magic ────────────────────────────────────────────────────
         pchMessageStart[0] = 0xfa; pchMessageStart[1] = 0xbf;
         pchMessageStart[2] = 0xb5; pchMessageStart[3] = 0xda;
         nDefaultPort = 18444;
 
-        // No seeds for RegTest — always local
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 196);
         base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1, 239);
