@@ -50,6 +50,7 @@ The `master` branch is regularly built and tested but is not guaranteed to be co
 - USDT tracepoints for userspace tracing (optional)
 - Multiprocess architecture (`bitcoin-node` / `bitcoin-gui`) on Linux/macOS
 - Experimental `libbitcoinkernel` library for embedding consensus logic
+- **IPFS Link Storage** — associate any transaction with an IPFS Content Identifier (CID) stored in a dedicated node-local LevelDB database; see [doc/ipfslink.md](doc/ipfslink.md)
 
 ---
 
@@ -57,16 +58,16 @@ The `master` branch is regularly built and tested but is not guaranteed to be co
 
 ```
 glcoin/
-├── src/              # Core source code (node, wallet, consensus, RPC, P2P)
-├── test/             # Functional and unit tests
-├── doc/              # Documentation (build guides, developer notes, RPC docs)
-├── contrib/          # Auxiliary scripts and tools
-├── depends/          # Dependency build system
-├── cmake/            # CMake modules and configuration
-├── ci/               # Continuous Integration scripts
-├── share/            # Desktop integration files
-├── CMakeLists.txt    # Top-level build definition
-└── CMakePresets.json # Preset configurations for common build targets
+├── src/                # Core source code (node, wallet, consensus, RPC, P2P)
+├── test/               # Functional and unit tests
+├── doc/                # Documentation (build guides, developer notes, RPC docs)
+├── contrib/            # Auxiliary scripts and tools
+├── depends/            # Dependency build system
+├── cmake/              # CMake modules and configuration
+├── ci/                 # Continuous Integration scripts
+├── share/              # Desktop integration files
+├── CMakeLists.txt      # Top-level build definition
+└── CMakePresets.json   # Preset configurations for common build targets
 ```
 
 ---
@@ -75,14 +76,14 @@ glcoin/
 
 ### Prerequisites
 
-| Dependency   | Minimum Version | Notes                          |
-|--------------|-----------------|--------------------------------|
-| CMake        | 3.22            | Build system                   |
-| C++ Compiler | C++20 capable   | GCC 11+, Clang 14+, MSVC 2022 |
-| Python       | 3.10            | Required for functional tests  |
-| SQLite3      | 3.7.17          | Required for wallet support    |
-| libevent     | 2.1.8           | Required for networking        |
-| Boost        | —               | Required (auto-detected)       |
+| Dependency    | Minimum Version | Notes                                   |
+|---------------|-----------------|-----------------------------------------|
+| CMake         | 3.22            | Build system                            |
+| C++ Compiler  | C++20 capable   | GCC 11+, Clang 14+, MSVC 2022          |
+| Python        | 3.10            | Required for functional tests           |
+| SQLite3       | 3.7.17          | Required for wallet support             |
+| libevent      | 2.1.8           | Required for networking                 |
+| Boost         | —               | Required (auto-detected)                |
 
 Optional dependencies: `Qt 6.2+` (GUI), `ZeroMQ 4.0+` (ZMQ), `QRencode` (QR codes), `libmultiprocess` (IPC).
 
@@ -148,19 +149,19 @@ See [doc/build-windows.md](doc/build-windows.md) for cross-compilation instructi
 
 The following binaries are produced by the build:
 
-| Executable              | Description                                              | Default |
-|-------------------------|----------------------------------------------------------|---------|
-| `glcoin`                | Combined node + wallet binary                            | ON      |
-| `glcoind`               | Background daemon (headless node)                        | ON      |
-| `glcoin-cli`            | RPC command-line client                                  | ON      |
-| `glcoin-qt`             | Graphical user interface (Qt)                            | OFF     |
-| `glcoin-tx`             | Transaction creation/manipulation utility                | ON*     |
-| `glcoin-util`           | General-purpose utility                                  | ON*     |
-| `glcoin-wallet`         | Wallet management tool                                   | ON*     |
-| `glcoin-node`           | Multiprocess node binary (Linux/macOS)                   | ON*     |
-| `glcoin-gui`            | Multiprocess GUI binary (Linux/macOS)                    | OFF     |
-| `glcoin-chainstate`     | Experimental chainstate utility                          | OFF     |
-| `libbitcoinkernel`      | Experimental embeddable consensus library                | OFF     |
+| Executable                | Description                                                                    | Default |
+|---------------------------|--------------------------------------------------------------------------------|---------|
+| `glcoin`                  | Combined node + wallet binary                                                  | ON      |
+| `glcoind`                 | Background daemon (headless node)                                              | ON      |
+| `glcoin-cli`              | RPC command-line client                                                        | ON      |
+| `glcoin-qt`               | Graphical user interface (Qt)                                                  | OFF     |
+| `glcoin-tx`               | Transaction creation/manipulation utility                                      | ON*     |
+| `glcoin-util`             | General-purpose utility                                                        | ON*     |
+| `glcoin-wallet`           | Wallet management tool                                                         | ON*     |
+| `glcoin-node`             | Multiprocess node binary (Linux/macOS)                                         | ON*     |
+| `glcoin-gui`              | Multiprocess GUI binary (Linux/macOS)                                          | OFF     |
+| `glcoin-chainstate`       | Experimental chainstate utility                                                | OFF     |
+| `libbitcoinkernel`        | Experimental embeddable consensus library                                      | OFF     |
 
 *Enabled when `BUILD_TESTS=ON` (default).
 
@@ -255,6 +256,7 @@ See [doc/benchmarking.md](doc/benchmarking.md) for details.
 - I2P support: [doc/i2p.md](doc/i2p.md)
 - Fuzzing: [doc/fuzzing.md](doc/fuzzing.md)
 - USDT tracing: [doc/tracing.md](doc/tracing.md)
+- **IPFS Link Storage:** [doc/ipfslink.md](doc/ipfslink.md)
 
 ---
 
